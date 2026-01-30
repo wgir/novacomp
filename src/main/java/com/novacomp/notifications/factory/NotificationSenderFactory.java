@@ -7,6 +7,8 @@ import com.novacomp.notifications.channel.sms.SmsSender;
 import com.novacomp.notifications.channel.sms.SmsProvider;
 import com.novacomp.notifications.channel.push.PushSender;
 import com.novacomp.notifications.channel.push.PushProvider;
+import com.novacomp.notifications.channel.slack.SlackSender;
+import com.novacomp.notifications.channel.slack.SlackProvider;
 
 /**
  * Factory class to create Notification Channels.
@@ -24,5 +26,9 @@ public class NotificationSenderFactory {
 
     public static NotificationChannel createPushChannel(PushProvider provider) {
         return new PushSender(provider);
+    }
+
+    public static NotificationChannel createSlackChannel(SlackProvider provider) {
+        return new SlackSender(provider);
     }
 }
