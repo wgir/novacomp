@@ -2,6 +2,8 @@ package com.novacomp.notifications.channel.email;
 
 import com.novacomp.notifications.api.NotificationException;
 import com.novacomp.notifications.api.NotificationResult;
+import com.novacomp.notifications.channel.sms.SmsNotification;
+import com.novacomp.notifications.provider.email.SendGridEmailProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -79,5 +81,58 @@ class EmailSenderTest {
 
         // Act & Assert
         assertThrows(NotificationException.class, () -> sender.send(notification));
+    }
+
+    @Test
+    void send_WithInvalidNotificationType_ShouldReturnFailure() {
+        when(provider.getProviderName()).thenReturn("SendGrid");
+
+        SmsNotification smsNotification = SmsNotification.builder()
+                .phoneNumber("+1234567890")
+                .message("Test message")
+                .build();
+
+        NotificationResult result = sender.send(smsNotification);
+
+        assertFalse(result.success());
+        assertEquals("EMAIL", result.channelName());
+        assertEquals("SendGrid", result.providerName());
+        assertTrue(result.message().contains("Invalid notification type"));
+    }
+
+    @Test
+    void sendGridProvider_WithNullApiKey_ShouldThrowException() {
+        SendGridEmailProvider sendGridProvider = new SendGridEmailProvider(null);
+        EmailSender emailSender = new EmailSender(sendGridProvider);
+
+        EmailNotification notification = EmailNotification.builder()
+                .to("test@example.com")
+                .subject("Test Subject")
+                .body("Test Body")
+                .build();
+
+        NotificationException exception = assertThrows(
+                NotificationException.class,
+                () -> emailSender.send(notification));
+
+        assertEquals("SendGrid API Key is missing", exception.getCause().getMessage());
+    }
+
+    @Test
+    void sendGridProvider_WithEmptyApiKey_ShouldThrowException() {
+        SendGridEmailProvider sendGridProvider = new SendGridEmailProvider("");
+        EmailSender emailSender = new EmailSender(sendGridProvider);
+
+        EmailNotification notification = EmailNotification.builder()
+                .to("test@example.com")
+                .subject("Test Subject")
+                .body("Test Body")
+                .build();
+
+        NotificationException exception = assertThrows(
+                NotificationException.class,
+                () -> emailSender.send(notification));
+
+        assertEquals("SendGrid API Key is missing", exception.getCause().getMessage());
     }
 }
