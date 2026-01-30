@@ -48,6 +48,7 @@ if (result.success()) {
 - **Email**: SendGrid implementation provided.
 - **SMS**: Twilio implementation provided.
 - **Push**: Firebase (FCM) implementation provided.
+- **Slack**: Webhook implementation provided.
 
 ## Architecture
 
@@ -105,8 +106,60 @@ A `Dockerfile` is provided to easily run the example in an isolated environment.
 2. Run the container:
    ```bash
    docker run --rm notifications-lib-example
-   
+   ```
 
+## Extending the Library
+
+The library is designed to be easily extended with new channels and providers. Below is an example of how the **Slack** channel was implemented.
+
+### 1. Create the Notification Model
+Define your data structure by implementing the `Notification` interface.
+```java
+public class SlackNotification implements Notification {
+    private final String channel;
+    private final String text;
+    // ... builders and getters
+}
+```
+
+### 2. Create the Provider Interface
+Define the contract for your new provider.
+```java
+public interface SlackProvider {
+    boolean sendSlackMessage(SlackNotification notification);
+    String getProviderName();
+}
+```
+
+### 3. Create the Channel Sender
+Implement the `NotificationChannel` interface to bridge the notification and the provider.
+```java
+public class SlackSender implements NotificationChannel {
+    private final SlackProvider provider;
+    
+    @Override
+    public NotificationResult send(Notification notification) {
+        // cast to SlackNotification, call provider.sendSlackMessage, return Result
+    }
+}
+```
+
+### 4. Create a Concrete Provider
+Implement your provider interface (e.g., for Webhooks, APIs, etc.).
+```java
+public class SlackWebhookProvider implements SlackProvider {
+    private final String webhookUrl;
+    // ... implementation
+}
+```
+
+### 5. Register in Factory (Optional)
+Add a helper method to `NotificationSenderFactory` for easy instantiation.
+```java
+public static NotificationChannel createSlackChannel(SlackProvider provider) {
+    return new SlackSender(provider);
+}
+```
 ## Running Specific Tests
 
 To run unit tests for a specific channel, use the `-Dtest` property with Maven:
@@ -124,6 +177,11 @@ mvn -Dtest=SmsSenderTest test
 **Push Channel:**
 ```bash
 mvn -Dtest=PushSenderTest test
+```
+
+**Slack Channel:**
+```bash
+mvn -Dtest=SlackSenderTest test
 ```
 
 ## AI Usage
