@@ -49,6 +49,7 @@ emailChannel.sendAsync(notification)
 - **Email**: SendGrid implementation provided.
 - **SMS**: Twilio implementation provided.
 - **Push**: Firebase (FCM) implementation provided.
+- **Slack**: Webhook implementation provided.
 
 ## Architecture
 
@@ -182,6 +183,11 @@ mvn -Dtest=SmsSenderTest test
 **Push Channel:**
 ```bash
 mvn -Dtest=PushSenderTest test
+```
+
+**Slack Channel:**
+```bash
+mvn -Dtest=SlackSenderTest test
 ```
 
 ## AI Usage

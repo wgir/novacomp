@@ -5,10 +5,12 @@ import com.novacomp.notifications.api.NotificationResult;
 import com.novacomp.notifications.channel.email.EmailNotification;
 import com.novacomp.notifications.channel.push.PushNotification;
 import com.novacomp.notifications.channel.sms.SmsNotification;
+import com.novacomp.notifications.channel.slack.SlackNotification;
 import com.novacomp.notifications.factory.NotificationSenderFactory;
 import com.novacomp.notifications.provider.email.SendGridEmailProvider;
 import com.novacomp.notifications.provider.push.FirebasePushProvider;
 import com.novacomp.notifications.provider.sms.TwilioSmsProvider;
+import com.novacomp.notifications.provider.slack.SlackWebhookProvider;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Executors;
@@ -58,6 +60,18 @@ public class NotificationExample {
                 .build();
 
         sendAndLog(pushChannel, push);
+
+        // 4. Configure Slack (Webhook)
+        var slackProvider = new SlackWebhookProvider("https://hooks.slack.com/services/T000/B000/XXXX");
+        NotificationChannel slackChannel = NotificationSenderFactory.createSlackChannel(slackProvider);
+
+        var slackNotification = SlackNotification.builder()
+                .channel("#notifications")
+                .text("A new system alert has been triggered!")
+                .username("AlertBot")
+                .build();
+
+        sendAndLog(slackChannel, slackNotification);
 
         // 4. Async Example (Default Executor)
         log.info("--- Starting Async Notification (Default) ---");
