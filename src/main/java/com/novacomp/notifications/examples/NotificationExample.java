@@ -88,7 +88,13 @@ public class NotificationExample {
 
             // Wait a bit for async tasks to complete in this example
             customExecutor.shutdown();
-            customExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            boolean finished = customExecutor.awaitTermination(5, TimeUnit.SECONDS);
+
+            if (!finished) {
+                log.warn("Async tasks did not finish within the timeout");
+                customExecutor.shutdownNow();
+
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
