@@ -242,5 +242,21 @@ mvn -Dtest=PushSenderTest test
 mvn -Dtest=SlackSenderTest test
 ```
 
+## Unit Test Coverage
+
+The project uses **JaCoCo** to measure code coverage. 
+
+### Generate Report
+To run all tests and generate the coverage report, use:
+```bash
+mvn clean verify
+```
+
+### View Report
+After the build completes, the report can be found at:
+`target/site/jacoco/index.html`
+
+Open this file in your web browser to see detailed coverage metrics for each package and class.
+
 ## AI Usage
 This project was implemented with the assistance of an AI agent (Gemini based) to generate the boilerplate code, structure the project according to SOLID principles, and ensure adherence to the requirements. The AI suggested the factory pattern and the specific breakdown of provider interfaces.

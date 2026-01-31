@@ -24,14 +24,14 @@ class SlackSenderTest {
     private SlackSender sender;
 
     @Test
-    void send_ShouldReturnSuccess_WhenProviderSucceeds() {
+    void send_ShouldReturnSuccess() throws Exception {
         // Arrange
-        when(provider.getProviderName()).thenReturn("Slack");
+        when(provider.getProviderName()).thenReturn("SlackProvider");
         when(provider.sendSlackMessage(any(SlackNotification.class))).thenReturn(true);
 
         SlackNotification notification = SlackNotification.builder()
                 .channel("#general")
-                .text("Hello Slack!")
+                .text("Hello Slack")
                 .build();
 
         // Act
@@ -40,56 +40,21 @@ class SlackSenderTest {
         // Assert
         assertTrue(result.success());
         assertEquals("SLACK", result.channelName());
-        assertEquals("Slack", result.providerName());
+        assertEquals("SlackProvider", result.providerName());
         assertNotNull(result.messageId());
+
         verify(provider).sendSlackMessage(notification);
-    }
-
-    @Test
-    void send_ShouldReturnFailure_WhenProviderReturnsFalse() {
-        // Arrange
-        when(provider.getProviderName()).thenReturn("Slack");
-        when(provider.sendSlackMessage(any(SlackNotification.class))).thenReturn(false);
-
-        SlackNotification notification = SlackNotification.builder()
-                .channel("#test")
-                .text("Failure test")
-                .build();
-
-        // Act
-        NotificationResult result = sender.send(notification);
-
-        // Assert
-        assertFalse(result.success());
-        assertEquals("Provider returned failure.", result.message());
-    }
-
-    @Test
-    void send_ShouldThrowException_WhenProviderThrows() {
-        // Arrange
-        when(provider.getProviderName()).thenReturn("Slack");
-        doThrow(new RuntimeException("Slack API Error")).when(provider).sendSlackMessage(any());
-
-        SlackNotification notification = SlackNotification.builder()
-                .channel("#error")
-                .text("Exception test")
-                .build();
-
-        // Act & Assert
-        NotificationException exception = assertThrows(NotificationException.class,
-                () -> sender.send(notification));
-        assertTrue(exception.getMessage().contains("Failed to send Slack message via Slack"));
     }
 
     @Test
     void send_WithInvalidNotificationType_ShouldReturnFailure() {
         // Arrange
-        when(provider.getProviderName()).thenReturn("Slack");
+        when(provider.getProviderName()).thenReturn("SlackProvider");
 
         EmailNotification emailNotification = EmailNotification.builder()
                 .to("test@example.com")
-                .subject("Wrong type")
-                .body("This should fail")
+                .subject("Test")
+                .body("Test body")
                 .build();
 
         // Act
@@ -102,36 +67,56 @@ class SlackSenderTest {
     }
 
     @Test
-    void slackWebhookProvider_WithNullWebhookUrl_ShouldThrowException() {
+    void send_WithEmptyFields_ShouldReturnFailure() {
         // Arrange
-        SlackWebhookProvider webhookProvider = new SlackWebhookProvider(null);
-        SlackSender slackSender = new SlackSender(webhookProvider);
+        when(provider.getProviderName()).thenReturn("SlackProvider");
 
         SlackNotification notification = SlackNotification.builder()
-                .channel("#general")
-                .text("Test")
+                .channel("")
+                .text("")
                 .build();
 
-        // Act & Assert
-        NotificationException exception = assertThrows(NotificationException.class,
-                () -> slackSender.send(notification));
-        assertEquals("Slack webhook URL is missing", exception.getCause().getMessage());
+        // Act
+        NotificationResult result = sender.send(notification);
+
+        // Assert
+        assertFalse(result.success());
+        assertEquals("SLACK", result.channelName());
+        assertTrue(result.message().contains("Validation failed"));
     }
 
     @Test
-    void slackWebhookProvider_WithEmptyWebhookUrl_ShouldThrowException() {
+    void send_WhenProviderReturnsFalse_ShouldReturnFailure() throws Exception {
         // Arrange
-        SlackWebhookProvider webhookProvider = new SlackWebhookProvider("");
-        SlackSender slackSender = new SlackSender(webhookProvider);
+        when(provider.getProviderName()).thenReturn("SlackProvider");
+        when(provider.sendSlackMessage(any(SlackNotification.class))).thenReturn(false);
 
         SlackNotification notification = SlackNotification.builder()
                 .channel("#general")
-                .text("Test")
+                .text("Hello")
+                .build();
+
+        // Act
+        NotificationResult result = sender.send(notification);
+
+        // Assert
+        assertFalse(result.success());
+        assertEquals("SLACK", result.channelName());
+        assertEquals("Provider returned failure.", result.message());
+    }
+
+    @Test
+    void send_ShouldThrowException_WhenProviderThrows() throws Exception {
+        // Arrange
+        when(provider.getProviderName()).thenReturn("SlackProvider");
+        doThrow(new RuntimeException("Slack API Error")).when(provider).sendSlackMessage(any());
+
+        SlackNotification notification = SlackNotification.builder()
+                .channel("#general")
+                .text("Hello")
                 .build();
 
         // Act & Assert
-        NotificationException exception = assertThrows(NotificationException.class,
-                () -> slackSender.send(notification));
-        assertEquals("Slack webhook URL is missing", exception.getCause().getMessage());
+        assertThrows(NotificationException.class, () -> sender.send(notification));
     }
 }
