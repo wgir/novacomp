@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of NotificationChannel for Slack notifications.
+ * Delegates the actual sending to a configured SlackProvider.
  */
 @Slf4j
 @RequiredArgsConstructor
