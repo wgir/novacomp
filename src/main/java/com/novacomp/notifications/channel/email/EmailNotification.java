@@ -22,6 +22,7 @@ public class EmailNotification implements Notification {
     private final String subject;
     @NonNull
     private final String body;
+    @NonNull
     private final String from;
     @Builder.Default
     private final List<File> attachments = Collections.emptyList();

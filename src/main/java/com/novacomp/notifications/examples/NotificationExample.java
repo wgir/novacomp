@@ -32,6 +32,7 @@ public class NotificationExample {
 
         var email = EmailNotification.builder()
                 .to("user@example.com")
+                .from("welcome@novacomp.com")
                 .subject("Welcome!")
                 .body("Hello from the Notification Library")
                 .build();

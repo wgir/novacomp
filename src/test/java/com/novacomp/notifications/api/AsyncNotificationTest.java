@@ -25,6 +25,7 @@ class AsyncNotificationTest {
         NotificationChannel channel = new EmailSender(provider);
         EmailNotification notification = EmailNotification.builder()
                 .to("test@example.com")
+                .from("sender@example.com")
                 .subject("Test")
                 .body("Body")
                 .build();
@@ -45,6 +46,7 @@ class AsyncNotificationTest {
         NotificationChannel channel = new EmailSender(provider);
         EmailNotification notification = EmailNotification.builder()
                 .to("test@example.com")
+                .from("sender@example.com")
                 .subject("Test")
                 .body("Body")
                 .build();

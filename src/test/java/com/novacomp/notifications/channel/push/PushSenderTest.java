@@ -81,6 +81,7 @@ class PushSenderTest {
 
                 EmailNotification emailNotification = EmailNotification.builder()
                                 .to("test@example.com")
+                                .from("sender@example.com")
                                 .subject("Test")
                                 .body("Test body")
                                 .build();

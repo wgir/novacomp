@@ -4,9 +4,9 @@ import com.novacomp.notifications.api.NotificationException;
 import com.novacomp.notifications.api.NotificationResult;
 import com.novacomp.notifications.channel.sms.SmsNotification;
 import com.novacomp.notifications.provider.email.SendGridEmailProvider;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -20,17 +20,24 @@ class EmailSenderTest {
         @Mock
         private EmailProvider provider;
 
-        @InjectMocks
         private EmailSender sender;
+
+        @BeforeEach
+        void setUp() {
+                // Use lenient() because some specialized tests (like SendGrid ones)
+                // create their own sender and don't use this mock.
+                lenient().when(provider.getProviderName()).thenReturn("TestProvider");
+                sender = new EmailSender(provider);
+        }
 
         @Test
         void send_ShouldReturnSuccess_WhenProviderSucceeds() throws Exception {
                 // Arrange
-                when(provider.getProviderName()).thenReturn("TestProvider");
                 when(provider.sendEmail(any(EmailNotification.class))).thenReturn(true);
 
                 EmailNotification notification = EmailNotification.builder()
                                 .to("test@example.com")
+                                .from("sender@example.com")
                                 .subject("Test")
                                 .body("Body")
                                 .build();
@@ -50,11 +57,11 @@ class EmailSenderTest {
         @Test
         void send_ShouldReturnFailure_WhenProviderReturnsFalse() throws Exception {
                 // Arrange
-                when(provider.getProviderName()).thenReturn("TestProvider");
                 when(provider.sendEmail(any(EmailNotification.class))).thenReturn(false);
 
                 EmailNotification notification = EmailNotification.builder()
                                 .to("test@example.com")
+                                .from("sender@example.com")
                                 .subject("Test")
                                 .body("Body")
                                 .build();
@@ -70,11 +77,11 @@ class EmailSenderTest {
         @Test
         void send_ShouldThrowException_WhenProviderThrows() throws Exception {
                 // Arrange
-                when(provider.getProviderName()).thenReturn("TestProvider");
                 doThrow(new RuntimeException("API Error")).when(provider).sendEmail(any());
 
                 EmailNotification notification = EmailNotification.builder()
                                 .to("test@example.com")
+                                .from("sender@example.com")
                                 .subject("Test")
                                 .body("Body")
                                 .build();
@@ -85,8 +92,6 @@ class EmailSenderTest {
 
         @Test
         void send_WithInvalidNotificationType_ShouldReturnFailure() {
-                when(provider.getProviderName()).thenReturn("SendGrid");
-
                 SmsNotification smsNotification = SmsNotification.builder()
                                 .phoneNumber("+1234567890")
                                 .message("Test message")
@@ -96,16 +101,16 @@ class EmailSenderTest {
 
                 assertFalse(result.success());
                 assertEquals("EMAIL", result.channelName());
-                assertEquals("SendGrid", result.providerName());
+                // Since provider is mocked to return "TestProvider" in setUp
+                assertEquals("TestProvider", result.providerName());
                 assertTrue(result.message().contains("Invalid notification type"));
         }
 
         @Test
         void send_WithInvalidEmail_ShouldReturnFailure() {
-                when(provider.getProviderName()).thenReturn("SendGrid");
-
                 EmailNotification notification = EmailNotification.builder()
                                 .to("invalid-email") // Missing @
+                                .from("sender@example.com")
                                 .subject("Test")
                                 .body("Test body")
                                 .build();
@@ -125,6 +130,7 @@ class EmailSenderTest {
 
                 EmailNotification notification = EmailNotification.builder()
                                 .to("test@example.com")
+                                .from("sender@example.com")
                                 .subject("Test Subject")
                                 .body("Test Body")
                                 .build();
@@ -143,6 +149,7 @@ class EmailSenderTest {
 
                 EmailNotification notification = EmailNotification.builder()
                                 .to("test@example.com")
+                                .from("sender@example.com")
                                 .subject("Test Subject")
                                 .body("Test Body")
                                 .build();
