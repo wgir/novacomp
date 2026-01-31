@@ -32,6 +32,7 @@ NotificationChannel emailChannel = NotificationSenderFactory.createEmailChannel(
 // 3. Create a Notification
 EmailNotification notification = EmailNotification.builder()
     .to("user@example.com")
+    .from("noreply@company.com")
     .subject("Hello")
     .body("World")
     .build();
