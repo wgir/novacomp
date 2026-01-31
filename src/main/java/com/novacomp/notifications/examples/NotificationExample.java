@@ -108,7 +108,7 @@ public class NotificationExample {
     private static void sendAndLog(NotificationChannel channel,
             com.novacomp.notifications.api.Notification notification) {
         try {
-            g result = channel.send(notification);
+            NotificationResult result = channel.send(notification);
             if (result.success()) {
                 log.info("✅ Notification sent! ID: {}", result.messageId());
             } else {

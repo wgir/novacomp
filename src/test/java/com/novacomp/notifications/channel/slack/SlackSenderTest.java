@@ -3,10 +3,9 @@ package com.novacomp.notifications.channel.slack;
 import com.novacomp.notifications.api.NotificationException;
 import com.novacomp.notifications.api.NotificationResult;
 import com.novacomp.notifications.channel.email.EmailNotification;
-import com.novacomp.notifications.provider.slack.SlackWebhookProvider;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -20,13 +19,17 @@ class SlackSenderTest {
     @Mock
     private SlackProvider provider;
 
-    @InjectMocks
     private SlackSender sender;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(provider.getProviderName()).thenReturn("SlackProvider");
+        sender = new SlackSender(provider);
+    }
 
     @Test
     void send_ShouldReturnSuccess() throws Exception {
         // Arrange
-        when(provider.getProviderName()).thenReturn("SlackProvider");
         when(provider.sendSlackMessage(any(SlackNotification.class))).thenReturn(true);
 
         SlackNotification notification = SlackNotification.builder()
@@ -47,48 +50,8 @@ class SlackSenderTest {
     }
 
     @Test
-    void send_WithInvalidNotificationType_ShouldReturnFailure() {
+    void send_ShouldReturnFailure_WhenProviderReturnsFalse() throws Exception {
         // Arrange
-        when(provider.getProviderName()).thenReturn("SlackProvider");
-
-        EmailNotification emailNotification = EmailNotification.builder()
-                .to("test@example.com")
-                .subject("Test")
-                .body("Test body")
-                .build();
-
-        // Act
-        NotificationResult result = sender.send(emailNotification);
-
-        // Assert
-        assertFalse(result.success());
-        assertEquals("SLACK", result.channelName());
-        assertTrue(result.message().contains("Invalid notification type"));
-    }
-
-    @Test
-    void send_WithEmptyFields_ShouldReturnFailure() {
-        // Arrange
-        when(provider.getProviderName()).thenReturn("SlackProvider");
-
-        SlackNotification notification = SlackNotification.builder()
-                .channel("")
-                .text("")
-                .build();
-
-        // Act
-        NotificationResult result = sender.send(notification);
-
-        // Assert
-        assertFalse(result.success());
-        assertEquals("SLACK", result.channelName());
-        assertTrue(result.message().contains("Validation failed"));
-    }
-
-    @Test
-    void send_WhenProviderReturnsFalse_ShouldReturnFailure() throws Exception {
-        // Arrange
-        when(provider.getProviderName()).thenReturn("SlackProvider");
         when(provider.sendSlackMessage(any(SlackNotification.class))).thenReturn(false);
 
         SlackNotification notification = SlackNotification.builder()
@@ -102,13 +65,13 @@ class SlackSenderTest {
         // Assert
         assertFalse(result.success());
         assertEquals("SLACK", result.channelName());
+        assertEquals("SlackProvider", result.providerName());
         assertEquals("Provider returned failure.", result.message());
     }
 
     @Test
     void send_ShouldThrowException_WhenProviderThrows() throws Exception {
         // Arrange
-        when(provider.getProviderName()).thenReturn("SlackProvider");
         doThrow(new RuntimeException("Slack API Error")).when(provider).sendSlackMessage(any());
 
         SlackNotification notification = SlackNotification.builder()
@@ -118,5 +81,42 @@ class SlackSenderTest {
 
         // Act & Assert
         assertThrows(NotificationException.class, () -> sender.send(notification));
+    }
+
+    @Test
+    void send_WithInvalidNotificationType_ShouldReturnFailure() {
+        // Arrange
+        EmailNotification emailNotification = EmailNotification.builder()
+                .to("test@example.com")
+                .from("sender@example.com")
+                .subject("Test")
+                .body("Test body")
+                .build();
+
+        // Act
+        NotificationResult result = sender.send(emailNotification);
+
+        // Assert
+        assertFalse(result.success());
+        assertEquals("SLACK", result.channelName());
+        assertEquals("SlackProvider", result.providerName());
+        assertTrue(result.message().contains("Invalid notification type"));
+    }
+
+    @Test
+    void send_WithEmptyFields_ShouldReturnFailure() {
+        // Arrange
+        SlackNotification notification = SlackNotification.builder()
+                .channel("")
+                .text("")
+                .build();
+
+        // Act
+        NotificationResult result = sender.send(notification);
+
+        // Assert
+        assertFalse(result.success());
+        assertEquals("SLACK", result.channelName());
+        assertTrue(result.message().contains("Validation failed"));
     }
 }
