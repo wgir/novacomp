@@ -13,6 +13,10 @@ import com.novacomp.notifications.provider.sms.TwilioSmsProvider;
 import com.novacomp.notifications.provider.slack.SlackWebhookProvider;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Example usage of the Notifications Library.
  * Demonstrates how to configure providers, create channels, and send

@@ -24,6 +24,12 @@ public class EmailSender implements NotificationChannel {
                     "Invalid notification type. Expected EmailNotification.");
         }
 
+        var validation = emailNotification.validate();
+        if (!validation.isValid()) {
+            return NotificationResult.failure("EMAIL", provider.getProviderName(),
+                    "Validation failed: " + String.join(", ", validation.errors()));
+        }
+
         try {
             log.info("Sending email to {} via {}", emailNotification.getTo(), provider.getProviderName());
             boolean sent = provider.sendEmail(emailNotification);

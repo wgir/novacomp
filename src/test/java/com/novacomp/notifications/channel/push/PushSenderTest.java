@@ -17,98 +17,116 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PushSenderTest {
 
-    @Mock
-    private PushProvider provider;
+        @Mock
+        private PushProvider provider;
 
-    @InjectMocks
-    private PushSender sender;
+        @InjectMocks
+        private PushSender sender;
 
-    @Test
-    void send_ShouldReturnSuccess() throws Exception {
-        when(provider.getProviderName()).thenReturn("FCM");
-        when(provider.sendPush(any(PushNotification.class))).thenReturn(true);
+        @Test
+        void send_ShouldReturnSuccess() throws Exception {
+                when(provider.getProviderName()).thenReturn("FCM");
+                when(provider.sendPush(any(PushNotification.class))).thenReturn(true);
 
-        PushNotification notification = PushNotification.builder()
-                .token("device_token")
-                .title("Title")
-                .body("Body")
-                .build();
+                PushNotification notification = PushNotification.builder()
+                                .token("device_token")
+                                .title("Title")
+                                .body("Body")
+                                .build();
 
-        NotificationResult result = sender.send(notification);
+                NotificationResult result = sender.send(notification);
 
-        assertTrue(result.success());
-    }
+                assertTrue(result.success());
+        }
 
-    @Test
-    void firebaseProvider_WithNullProjectId_ShouldThrowException() {
-        FirebasePushProvider firebaseProvider = new FirebasePushProvider(null, "path/to/key.json");
-        PushSender pushSender = new PushSender(firebaseProvider);
+        @Test
+        void firebaseProvider_WithNullProjectId_ShouldThrowException() {
+                FirebasePushProvider firebaseProvider = new FirebasePushProvider(null, "path/to/key.json");
+                PushSender pushSender = new PushSender(firebaseProvider);
 
-        PushNotification notification = PushNotification.builder()
-                .token("device_token")
-                .title("Title")
-                .body("Body")
-                .build();
+                PushNotification notification = PushNotification.builder()
+                                .token("device_token")
+                                .title("Title")
+                                .body("Body")
+                                .build();
 
-        NotificationException exception = assertThrows(
-                NotificationException.class,
-                () -> pushSender.send(notification));
+                NotificationException exception = assertThrows(
+                                NotificationException.class,
+                                () -> pushSender.send(notification));
 
-        assertEquals("Firebase credentials are missing", exception.getCause().getMessage());
-    }
+                assertEquals("Firebase credentials are missing", exception.getCause().getMessage());
+        }
 
-    @Test
-    void firebaseProvider_WithNullServiceAccountKeyPath_ShouldThrowException() {
-        FirebasePushProvider firebaseProvider = new FirebasePushProvider("test-project-id", null);
-        PushSender pushSender = new PushSender(firebaseProvider);
+        @Test
+        void firebaseProvider_WithNullServiceAccountKeyPath_ShouldThrowException() {
+                FirebasePushProvider firebaseProvider = new FirebasePushProvider("test-project-id", null);
+                PushSender pushSender = new PushSender(firebaseProvider);
 
-        PushNotification notification = PushNotification.builder()
-                .token("device_token")
-                .title("Title")
-                .body("Body")
-                .build();
+                PushNotification notification = PushNotification.builder()
+                                .token("device_token")
+                                .title("Title")
+                                .body("Body")
+                                .build();
 
-        NotificationException exception = assertThrows(
-                NotificationException.class,
-                () -> pushSender.send(notification));
+                NotificationException exception = assertThrows(
+                                NotificationException.class,
+                                () -> pushSender.send(notification));
 
-        assertEquals("Firebase credentials are missing", exception.getCause().getMessage());
-    }
+                assertEquals("Firebase credentials are missing", exception.getCause().getMessage());
+        }
 
-    @Test
-    void send_WithInvalidNotificationType_ShouldReturnFailure() {
-        when(provider.getProviderName()).thenReturn("FCM");
+        @Test
+        void send_WithInvalidNotificationType_ShouldReturnFailure() {
+                when(provider.getProviderName()).thenReturn("FCM");
 
-        EmailNotification emailNotification = EmailNotification.builder()
-                .to("test@example.com")
-                .subject("Test")
-                .body("Test body")
-                .build();
+                EmailNotification emailNotification = EmailNotification.builder()
+                                .to("test@example.com")
+                                .subject("Test")
+                                .body("Test body")
+                                .build();
 
-        NotificationResult result = sender.send(emailNotification);
+                NotificationResult result = sender.send(emailNotification);
 
-        assertFalse(result.success());
-        assertEquals("PUSH", result.channelName());
-        assertEquals("FCM", result.providerName());
-        assertTrue(result.message().contains("Invalid notification type"));
-    }
+                assertFalse(result.success());
+                assertEquals("PUSH", result.channelName());
+                assertEquals("FCM", result.providerName());
+                assertTrue(result.message().contains("Invalid notification type"));
+        }
 
-    @Test
-    void send_WhenProviderReturnsFalse_ShouldReturnFailure() throws Exception {
-        when(provider.getProviderName()).thenReturn("FCM");
-        when(provider.sendPush(any(PushNotification.class))).thenReturn(false);
+        @Test
+        void send_WithEmptyPushToken_ShouldReturnFailure() {
+                when(provider.getProviderName()).thenReturn("FCM");
 
-        PushNotification notification = PushNotification.builder()
-                .token("device_token")
-                .title("Title")
-                .body("Body")
-                .build();
+                PushNotification notification = PushNotification.builder()
+                                .token("")
+                                .title("Title")
+                                .body("Body")
+                                .build();
 
-        NotificationResult result = sender.send(notification);
+                NotificationResult result = sender.send(notification);
 
-        assertFalse(result.success());
-        assertEquals("PUSH", result.channelName());
-        assertEquals("FCM", result.providerName());
-        assertEquals("Provider returned failure.", result.message());
-    }
+                assertFalse(result.success());
+                assertEquals("PUSH", result.channelName());
+                assertTrue(result.message().contains("Validation failed"));
+                assertTrue(result.message().contains("Push token cannot be empty"));
+        }
+
+        @Test
+        void send_WhenProviderReturnsFalse_ShouldReturnFailure() throws Exception {
+                when(provider.getProviderName()).thenReturn("FCM");
+                when(provider.sendPush(any(PushNotification.class))).thenReturn(false);
+
+                PushNotification notification = PushNotification.builder()
+                                .token("device_token")
+                                .title("Title")
+                                .body("Body")
+                                .build();
+
+                NotificationResult result = sender.send(notification);
+
+                assertFalse(result.success());
+                assertEquals("PUSH", result.channelName());
+                assertEquals("FCM", result.providerName());
+                assertEquals("Provider returned failure.", result.message());
+        }
 }

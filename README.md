@@ -5,6 +5,7 @@ A framework-agnostic, extensible Java library for sending notifications via mult
 ## Features
 
 - **Framework Agnostic**: Pure Java, no Spring/Quarkus dependencies.
+- **Async Support**: Native `CompletableFuture` support for non-blocking operations.
 - **Extensible**: Easily add new channels or providers without modifying core code.
 - **SOLID Principles**: Adheres to DIP and OCP.
 - **Immutable Models**: All notification data is immutable.
@@ -35,12 +36,12 @@ EmailNotification notification = EmailNotification.builder()
     .body("World")
     .build();
 
-// 4. Send
+// 4. Send (Sync)
 NotificationResult result = emailChannel.send(notification);
 
-if (result.success()) {
-    System.out.println("Sent!");
-}
+// 5. Send (Async)
+emailChannel.sendAsync(notification)
+    .thenAccept(res -> System.out.println("Async result: " + res.success()));
 ```
 
 ## Supported Channels
@@ -56,6 +57,63 @@ The library is designed around the `NotificationChannel` interface.
 `NotificationSender` delegates work to specific `SmsProvider`, `EmailProvider`, etc.
 
 This allows you to swap providers (e.g., Twilio -> Vonage) by simply implementing a new `SmsProvider`, without changing your business logic.
+
+## Asynchronous Notifications
+
+The library provides native support for asynchronous notification sending via `CompletableFuture`.
+
+### Default Async
+Uses the `ForkJoinPool.commonPool()` per default `CompletableFuture` behavior.
+```java
+channel.sendAsync(notification)
+    .thenAccept(result -> {
+        if (result.success()) {
+            log.info("Async send success");
+        }
+    });
+```
+
+### Custom Executor (Recommended for Production)
+For better control over resources, pass a custom `Executor`.
+```java
+ExecutorService executor = Executors.newFixedThreadPool(10);
+channel.sendAsync(notification, executor)
+    .handle((result, ex) -> {
+        if (ex != null) log.error("Error", ex);
+        return result;
+    });
+```
+
+> [!IMPORTANT]
+> **Technical Considerations: Thread Management**
+> 
+> While it may be tempting to create executors with a large number of threads (e.g., `newFixedThreadPool(1000)`), this can lead to several issues:
+> 
+> 1. **Thread Exhaustion**: Every thread consumes memory (stack size). Creating thousands of threads can lead to `OutOfMemoryError: unable to create new native thread`.
+> 2. **Context Switching Overhead**: The CPU spends more time switching between threads than actually executing code, severely degrading performance.
+> 3. **Socket/Connection Limits**: Providers (like Twilio or SendGrid) have rate limits. A high thread count might overwhelm the provider's API or exhaust local socket connections.
+> 4. **Resource Leakage**: Always ensure you shut down custom executors (`executor.shutdown()`) when they are no longer needed to prevent memory leaks.
+
+### Sizing your Thread Pool
+
+Since notification sending is an **I/O-bound** task (most of the time is spent waiting for the network), you can generally afford a higher thread count than for CPU-bound tasks.
+
+A common formula to calculate the optimal thread pool size (from *Java Concurrency in Practice*) is:
+
+**`N_threads = N_cores * U_cpu * (1 + W/C)`**
+
+Where:
+- **`N_cores`**: Number of available CPUs (`Runtime.getRuntime().availableProcessors()`).
+- **`U_cpu`**: Target CPU utilization (0 <= U_cpu <= 1).
+- **`W/C`**: Ratio of **Wait time** to **Compute time**.
+
+**Practical Example:**
+If you have 4 cores, want 50% CPU utilization, and your notification takes 100ms (95ms waiting for API, 5ms processing):
+`N_threads = 4 * 0.5 * (1 + 95/5) = 2 * 20 = 40 threads`.
+
+**Recommendation:**
+- For simple use cases, a `FixedThreadPool` with **10-20 threads** is often a safe start.
+- For high-performance needs, perform load testing to find the "sweet spot" before hitting thread exhaustion.
 
 ## Running Examples
 

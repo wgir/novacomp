@@ -24,6 +24,12 @@ public class PushSender implements NotificationChannel {
                     "Invalid notification type. Expected PushNotification.");
         }
 
+        var validation = pushNotification.validate();
+        if (!validation.isValid()) {
+            return NotificationResult.failure("PUSH", provider.getProviderName(),
+                    "Validation failed: " + String.join(", ", validation.errors()));
+        }
+
         try {
             log.info("Sending Push to {} via {}", pushNotification.getToken(), provider.getProviderName());
             boolean sent = provider.sendPush(pushNotification);

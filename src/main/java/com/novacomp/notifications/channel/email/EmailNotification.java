@@ -1,6 +1,7 @@
 package com.novacomp.notifications.channel.email;
 
 import com.novacomp.notifications.api.Notification;
+import com.novacomp.notifications.api.ValidationResult;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -28,4 +29,18 @@ public class EmailNotification implements Notification {
     private final List<String> cc = Collections.emptyList();
     @Builder.Default
     private final List<String> bcc = Collections.emptyList();
+
+    @Override
+    public ValidationResult validate() {
+        if (to == null || to.isBlank() || !to.contains("@")) {
+            return ValidationResult.failure("Invalid recipient email: " + to);
+        }
+        if (subject == null || subject.isBlank()) {
+            return ValidationResult.failure("Email subject cannot be empty");
+        }
+        if (body == null || body.isBlank()) {
+            return ValidationResult.failure("Email body cannot be empty");
+        }
+        return ValidationResult.success();
+    }
 }

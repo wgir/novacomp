@@ -24,6 +24,12 @@ public class SlackSender implements NotificationChannel {
                     "Invalid notification type. Expected SlackNotification.");
         }
 
+        var validation = slackNotification.validate();
+        if (!validation.isValid()) {
+            return NotificationResult.failure("SLACK", provider.getProviderName(),
+                    "Validation failed: " + String.join(", ", validation.errors()));
+        }
+
         try {
             log.info("Sending Slack message to {} via {}", slackNotification.getChannel(), provider.getProviderName());
             boolean sent = provider.sendSlackMessage(slackNotification);

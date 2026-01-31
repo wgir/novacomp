@@ -24,6 +24,12 @@ public class SmsSender implements NotificationChannel {
                     "Invalid notification type. Expected SmsNotification.");
         }
 
+        var validation = smsNotification.validate();
+        if (!validation.isValid()) {
+            return NotificationResult.failure("SMS", provider.getProviderName(),
+                    "Validation failed: " + String.join(", ", validation.errors()));
+        }
+
         try {
             log.info("Sending SMS to {} via {}", smsNotification.getPhoneNumber(), provider.getProviderName());
             boolean sent = provider.sendSms(smsNotification);
