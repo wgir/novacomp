@@ -3,7 +3,6 @@ package com.novacomp.notifications.channel.email;
 import com.novacomp.notifications.api.NotificationException;
 import com.novacomp.notifications.api.NotificationResult;
 import com.novacomp.notifications.channel.sms.SmsNotification;
-import com.novacomp.notifications.provider.email.SendGridEmailProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,9 +23,8 @@ class EmailSenderTest {
 
         @BeforeEach
         void setUp() {
-                // Use lenient() because some specialized tests (like SendGrid ones)
-                // create their own sender and don't use this mock.
-                lenient().when(provider.getProviderName()).thenReturn("TestProvider");
+                // No longer need lenient() because implementation-specific tests were moved.
+                when(provider.getProviderName()).thenReturn("TestProvider");
                 sender = new EmailSender(provider);
         }
 
@@ -101,7 +99,6 @@ class EmailSenderTest {
 
                 assertFalse(result.success());
                 assertEquals("EMAIL", result.channelName());
-                // Since provider is mocked to return "TestProvider" in setUp
                 assertEquals("TestProvider", result.providerName());
                 assertTrue(result.message().contains("Invalid notification type"));
         }
@@ -121,43 +118,5 @@ class EmailSenderTest {
                 assertEquals("EMAIL", result.channelName());
                 assertTrue(result.message().contains("Validation failed"));
                 assertTrue(result.message().contains("Invalid recipient email"));
-        }
-
-        @Test
-        void sendGridProvider_WithNullApiKey_ShouldThrowException() {
-                SendGridEmailProvider sendGridProvider = new SendGridEmailProvider(null);
-                EmailSender emailSender = new EmailSender(sendGridProvider);
-
-                EmailNotification notification = EmailNotification.builder()
-                                .to("test@example.com")
-                                .from("sender@example.com")
-                                .subject("Test Subject")
-                                .body("Test Body")
-                                .build();
-
-                NotificationException exception = assertThrows(
-                                NotificationException.class,
-                                () -> emailSender.send(notification));
-
-                assertEquals("SendGrid API Key is missing", exception.getCause().getMessage());
-        }
-
-        @Test
-        void sendGridProvider_WithEmptyApiKey_ShouldThrowException() {
-                SendGridEmailProvider sendGridProvider = new SendGridEmailProvider("");
-                EmailSender emailSender = new EmailSender(sendGridProvider);
-
-                EmailNotification notification = EmailNotification.builder()
-                                .to("test@example.com")
-                                .from("sender@example.com")
-                                .subject("Test Subject")
-                                .body("Test Body")
-                                .build();
-
-                NotificationException exception = assertThrows(
-                                NotificationException.class,
-                                () -> emailSender.send(notification));
-
-                assertEquals("SendGrid API Key is missing", exception.getCause().getMessage());
         }
 }
