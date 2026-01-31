@@ -32,6 +32,7 @@ public class NotificationExample {
 
         var email = EmailNotification.builder()
                 .to("user@example.com")
+                .from("welcome@novacomp.com")
                 .subject("Welcome!")
                 .body("Hello from the Notification Library")
                 .build();
@@ -107,7 +108,7 @@ public class NotificationExample {
     private static void sendAndLog(NotificationChannel channel,
             com.novacomp.notifications.api.Notification notification) {
         try {
-            NotificationResult result = channel.send(notification);
+            g result = channel.send(notification);
             if (result.success()) {
                 log.info("✅ Notification sent! ID: {}", result.messageId());
             } else {
