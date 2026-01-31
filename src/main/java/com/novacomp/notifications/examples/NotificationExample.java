@@ -96,8 +96,8 @@ public class NotificationExample {
             if (!finished) {
                 log.warn("Async tasks did not finish within the timeout");
                 customExecutor.shutdownNow();
-
             }
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
