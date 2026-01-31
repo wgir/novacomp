@@ -74,6 +74,34 @@ public class NotificationExample {
                 .build();
 
         sendAndLog(slackChannel, slack);
+
+        // 4. Async Example (Default Executor)
+        log.info("--- Starting Async Notification (Default) ---");
+        emailChannel.sendAsync(email)
+                .thenAccept(result -> log.info("Async (Default) Result: {}", result.success() ? "SUCCESS" : "FAILURE"));
+
+        // 5. Async Example (Custom Executor)
+        log.info("--- Starting Async Notification (Custom Executor) ---");
+        ExecutorService customExecutor = Executors.newFixedThreadPool(2);
+        try {
+            smsChannel.sendAsync(sms, customExecutor)
+                    .thenAccept(
+                            result -> log.info("Async (Custom) Result: {}", result.success() ? "SUCCESS" : "FAILURE"));
+
+            // Wait a bit for async tasks to complete in this example
+            customExecutor.shutdown();
+            boolean finished = customExecutor.awaitTermination(5, TimeUnit.SECONDS);
+
+            if (!finished) {
+                log.warn("Async tasks did not finish within the timeout");
+                customExecutor.shutdownNow();
+
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        log.info("--- Main Method Finished ---");
     }
 
     private static void sendAndLog(NotificationChannel channel,
